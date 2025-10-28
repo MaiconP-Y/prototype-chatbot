@@ -17,23 +17,13 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# settings.py
-
-# 1. SECRET_KEY: No docker-compose, você está passando DJANGO_SECRET_KEY, 
-# mas no settings.py você está lendo SECRET_KEY. O nome deve ser consistente.
-# Altere para ler o nome que você está usando no docker-compose (DJANGO_SECRET_KEY).
-
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY") # CORREÇÃO: Usar DJANGO_SECRET_KEY
 
 
-# 2. DEBUG: Para converter a string 'True' ou 'False', compare-a com a string 'True' (ignorando maiúsculas/minúsculas).
-# O .upper() garante que 'true', 'True' ou 'TRUE' funcionem.
-
-DEBUG_VALUE = os.environ.get("DEBUG", 'False') # Pega a string 'True' ou 'False'
-DEBUG = DEBUG_VALUE.upper() == 'TRUE'          # CORREÇÃO: Converte a string para booleano True/False
+DEBUG_VALUE = os.environ.get("DEBUG", 'False') 
+DEBUG = DEBUG_VALUE.upper() == 'TRUE'          
 
 
-# O ALLOWED_HOSTS está correto, mas pode ser simplificado:
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1").split(",")
 
 
