@@ -11,3 +11,4 @@ Um protótipo escalável para integração com WhatsApp API(WAHA), construído c
 - **APIs RESTful** prontas para extensão
 
 ## Arquitetura
+WhatsApp → WAHA → Webhook → Django → PostgreSQL
