@@ -1,6 +1,6 @@
 # Django WhatsApp Prototype
 
-Um protótipo escalável para integração com WhatsApp API(WAHA), construído com Django e Docker.
+Um protótipo escalável para integração com WhatsApp API(WAHA), Fiz esse protótipo para usar quando for necessario mudar de api e algo mais recontruido do 0, construído com Django e Docker.
 
 ## Características
 
