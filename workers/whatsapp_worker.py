@@ -95,7 +95,9 @@ class WhatsAppWorker:
         if not user_messages:
             return "Olá! Em que posso ajudar?"
             
-        last_user_message = user_messages[0].lower()
+        # CORREÇÃO: Pegar a ÚLTIMA mensagem do usuário
+        last_user_message = user_messages[-1].lower() if user_messages else ""
+        
         if "pedido" in last_user_message:
             return "Olá! Verifiquei seu pedido e ele está em processamento. Previsão de entrega: 2 dias úteis."
         elif "preço" in last_user_message or "valor" in last_user_message:
