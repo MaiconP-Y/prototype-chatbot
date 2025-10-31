@@ -13,6 +13,13 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 
+#Redis
+REDIS_HOST = os.environ.get('REDIS_HOST')
+REDIS_PORT = int(os.environ.get('REDIS_PORT'))
+REDIS_DB = int(os.environ.get('REDIS_DB'))
+
+
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -125,6 +132,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 
 
 
