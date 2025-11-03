@@ -1,6 +1,9 @@
 import os
 import requests
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Waha():
 
@@ -25,6 +28,8 @@ class Waha():
             "session": session_name
         }
         
+        response = None # Correção para evitar UnboundLocalError
+        
         try:
             response = requests.post(
                 url, 
@@ -33,14 +38,70 @@ class Waha():
             )
             response.raise_for_status() 
             
-            print(f"Mensagem enviada com sucesso! Status: {response.status_code}")
+            logger.info(f"Mensagem enviada com sucesso! Status: {response.status_code}")
             return response.json()
             
         except requests.exceptions.RequestException as e:
-            # Captura erros de conexão ou erros de status (4xx/5xx)
-            print(f"Erro ao enviar mensagem para WAHA: {e}")
+            logger.error(f"Erro ao enviar mensagem para WAHA: {e}")
             if response is not None and response.status_code == 401:
-                print("ERRO 401: Verifique se o AUTH_TOKEN no WAHA e o WAHA_AUTH_TOKEN no Django são iguais e estão corretos.")
+                logger.error("ERRO 401: Verifique se o WAHA_API_KEY está correto.")
             return None
 
+
+    def start_session_with_hmac(self, hmac_key: str):
+        """
+        USA PUT /api/sessions/{session} para reconfigurar o webhook,
+        lidando com sessões que já existem (erro 422), conforme a documentação.
+        """
+        session_name = self.waha_instance
         
+        # 1. Endpoint específico da sessão (PUT para UPDATE)
+        url = f"{self.__api_url}/api/sessions/{session_name}" 
+        api_key = self.waha_api_chave 
+        
+        headers = {
+            'Content-Type': 'application/json',
+            'X-Api-Key': api_key
+        }
+        
+        webhook_url = os.environ.get("WHATSAPP_HOOK_URL", "http://django-web:8000/api/whatsapp/webhook/")
+        hook_events = os.environ.get("WHATSAPP_HOOK_EVENTS", "message")
+        
+        payload = {    
+            "config": {
+                "webhooks": [
+                    {
+                        "url": webhook_url,
+                        "events": [e.strip() for e in hook_events.split(',')],
+                        "hmac": { 
+                            "key": hmac_key,
+                            "algorithm": "sha512",
+                            "header": "X-Webhook-Hmac"
+                        }
+                    }
+                ]
+            }
+        }
+        
+        response = None 
+        
+        try:
+            response = requests.put(
+                url, 
+                headers=headers, 
+                data=json.dumps(payload)
+            )
+            
+            response.raise_for_status() 
+            logger.info(f" Sessão '{session_name}' reconfigurada (PUT) com HMAC com sucesso. Status: {response.status_code}")
+            return True
+            
+        except requests.exceptions.RequestException as e:
+            # Captura erros de conexão, timeout ou status (4xx/5xx)
+            logger.error(f"❌ Erro ao reconfigurar sessão WAHA: {e}")
+        
+        # Diagnóstico de erro 401
+        if response is not None and response.status_code == 401:
+            logger.error("ERRO 401: Verifique se o 'WAHA_API_KEY' no .env está correto.")
+            
+        return False

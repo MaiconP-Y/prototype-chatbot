@@ -5,7 +5,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# O objeto cliente será armazenado globalmente AQUI, mas inicializado como None
 _redis_client = None 
 
 # --- A Conexão Lazy (O Padrão Ouro) ---
@@ -67,7 +66,7 @@ def get_next_from_queue() -> str:
     result = r.blpop(QUEUE_KEY, timeout=30)
     if result:
         chat_id = result[1]
-        logger.info(f"🎯 Próximo usuário da fila: {chat_id}")
+        logger.info(f"Próximo usuário da fila: {chat_id}")
         return chat_id
     return None
 
@@ -127,4 +126,21 @@ def set_session_ttl(chat_id: str, ttl_seconds: int = 3600):
     """Define TTL (Time To Live) para a sessão (padrão: 1 hora)"""
     r = get_redis_client()
     r.expire(get_session_key(chat_id), ttl_seconds)
-    logger.info(f"⏰ TTL de {ttl_seconds}s definido para sessão de {chat_id}")
+    logger.info(f"TTL de {ttl_seconds}s definido para sessão de {chat_id}")
+
+#MESSAGE_DUPLICATE:
+
+def check_and_set_message_id(message_id: str) -> bool:
+    """
+    Verifica se o ID da mensagem já foi processado.
+    Se não, armazena o ID e retorna True. O ID expira em 60 segundos (TTL).
+
+    :param message_id: O ID único da mensagem.
+    :return: True se a mensagem é NOVA, False se for DUPLICADA.
+    """
+    r = get_redis_client()
+    key = f"processed_msg:{message_id}"
+    # SET NX (Set if Not eXists) e EX (Expire time in seconds)
+    # Se o SET for bem-sucedido (o ID é novo), ele retorna 1. Se o ID já existe, retorna 0.
+    is_new = r.set(key, 1, ex=60, nx=True)
+    return is_new is not None # Se for 'None', é porque já existia (duplicado)
